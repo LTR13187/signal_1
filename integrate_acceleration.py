@@ -27,11 +27,30 @@ def load_data(filename):
         
     Returns:
         DataFrame with columns: time, position_ref, velocity_ref, acceleration
+        
+    Raises:
+        FileNotFoundError: If the CSV file doesn't exist
+        ValueError: If the CSV file has incorrect format
     """
-    # Read CSV file, skip the first column (line numbers)
-    data = pd.read_csv(filename, sep='\t', header=None, 
-                       names=['time', 'position_ref', 'velocity_ref', 'acceleration'])
-    return data
+    try:
+        # Read CSV file, skip the first column (line numbers)
+        data = pd.read_csv(filename, sep='\t', header=None, 
+                           names=['time', 'position_ref', 'velocity_ref', 'acceleration'])
+        
+        # Validate that we have the expected number of columns
+        if len(data.columns) != 4:
+            raise ValueError(f"CSV file should have 4 columns, but has {len(data.columns)}")
+        
+        # Validate that we have some data
+        if len(data) == 0:
+            raise ValueError("CSV file is empty")
+            
+        return data
+        
+    except FileNotFoundError:
+        raise FileNotFoundError(f"CSV file '{filename}' not found. Please ensure the file exists.")
+    except pd.errors.ParserError as e:
+        raise ValueError(f"Error parsing CSV file '{filename}': {str(e)}")
 
 
 def integrate_trapezoidal(y, x):
@@ -85,7 +104,7 @@ def integrate_acceleration(data):
     return velocity_calc, position_calc
 
 
-def plot_results(data, velocity_calc, position_calc):
+def plot_results(data, velocity_calc, position_calc, output_file='integration_results.png'):
     """
     Plot the calculated and reference values for comparison.
     
@@ -93,6 +112,7 @@ def plot_results(data, velocity_calc, position_calc):
         data: DataFrame with reference data
         velocity_calc: Calculated velocity values
         position_calc: Calculated position values
+        output_file: Path to save the output plot (default: 'integration_results.png')
     """
     fig, axes = plt.subplots(3, 1, figsize=(12, 10))
     
@@ -125,8 +145,8 @@ def plot_results(data, velocity_calc, position_calc):
     axes[2].legend()
     
     plt.tight_layout()
-    plt.savefig('integration_results.png', dpi=150)
-    print("Plot saved as 'integration_results.png'")
+    plt.savefig(output_file, dpi=150)
+    print(f"Plot saved as '{output_file}'")
     plt.show()
 
 
@@ -159,13 +179,35 @@ def calculate_errors(data, velocity_calc, position_calc):
 
 def main():
     """Main function to execute the integration and plotting."""
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Numerische Integration von Beschleunigungsdaten'
+    )
+    parser.add_argument(
+        '--input', '-i',
+        default='avs.csv',
+        help='Pfad zur CSV-Datei mit Beschleunigungsdaten (default: avs.csv)'
+    )
+    parser.add_argument(
+        '--output', '-o',
+        default='integration_results.png',
+        help='Pfad zur Ausgabedatei für Plots (default: integration_results.png)'
+    )
+    args = parser.parse_args()
+    
     print("Numerische Integration von Beschleunigungsdaten")
     print("="*60)
     
     # Load data
-    print("\nLade Daten aus 'avs.csv'...")
-    data = load_data('avs.csv')
-    print(f"Daten geladen: {len(data)} Datenpunkte")
+    print(f"\nLade Daten aus '{args.input}'...")
+    try:
+        data = load_data(args.input)
+        print(f"Daten geladen: {len(data)} Datenpunkte")
+    except (FileNotFoundError, ValueError) as e:
+        print(f"Fehler beim Laden der Daten: {str(e)}")
+        return
     
     # Perform integration
     print("\nFühre numerische Integration durch...")
@@ -177,7 +219,7 @@ def main():
     
     # Plot results
     print("\nErstelle Plots...")
-    plot_results(data, velocity_calc, position_calc)
+    plot_results(data, velocity_calc, position_calc, output_file=args.output)
     
     print("\nFertig!")
 

@@ -46,6 +46,20 @@ pip install -r requirements.txt
 python3 integrate_acceleration.py
 ```
 
+### Optionen (Options)
+
+```bash
+python3 integrate_acceleration.py --help
+```
+
+- `--input`, `-i`: Pfad zur CSV-Datei (default: `avs.csv`)
+- `--output`, `-o`: Pfad zur Ausgabedatei (default: `integration_results.png`)
+
+Beispiel (Example):
+```bash
+python3 integrate_acceleration.py --input data.csv --output results.png
+```
+
 Das Skript:
 1. Liest die Daten aus `avs.csv`
 2. Führt die numerische Integration durch (Trapezregel)

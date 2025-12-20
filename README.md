@@ -54,10 +54,11 @@ python3 integrate_acceleration.py --help
 
 - `--input`, `-i`: Pfad zur CSV-Datei (default: `avs.csv`)
 - `--output`, `-o`: Pfad zur Ausgabedatei (default: `integration_results.png`)
+- `--show-plot`: Plot interaktiv anzeigen (blockiert die Ausführung)
 
 Beispiel (Example):
 ```bash
-python3 integrate_acceleration.py --input data.csv --output results.png
+python3 integrate_acceleration.py --input data.csv --output results.png --show-plot
 ```
 
 Das Skript:

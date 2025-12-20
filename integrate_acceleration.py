@@ -57,11 +57,12 @@ def integrate_trapezoidal(y, x):
     """
     Perform numerical integration using the trapezoidal rule.
     
-    Uses vectorized NumPy operations for efficiency.
+    Uses vectorized NumPy operations for efficiency. Handles both
+    uniform and non-uniform spacing in x values.
     
     Args:
         y: Array of values to integrate
-        x: Array of x-values (e.g., time)
+        x: Array of x-values (e.g., time), can have non-uniform spacing
         
     Returns:
         Array of integrated values

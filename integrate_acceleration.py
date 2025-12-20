@@ -33,7 +33,7 @@ def load_data(filename):
         ValueError: If the CSV file has incorrect format
     """
     try:
-        # Read CSV file, skip the first column (line numbers)
+        # Read CSV file (tab-separated, 4 columns: time, position, velocity, acceleration)
         data = pd.read_csv(filename, sep='\t', header=None, 
                            names=['time', 'position_ref', 'velocity_ref', 'acceleration'])
         
@@ -57,6 +57,8 @@ def integrate_trapezoidal(y, x):
     """
     Perform numerical integration using the trapezoidal rule.
     
+    Uses vectorized NumPy operations for efficiency.
+    
     Args:
         y: Array of values to integrate
         x: Array of x-values (e.g., time)
@@ -64,10 +66,15 @@ def integrate_trapezoidal(y, x):
     Returns:
         Array of integrated values
     """
-    integrated = np.zeros(len(y))
-    for i in range(1, len(y)):
-        dx = x[i] - x[i-1]
-        integrated[i] = integrated[i-1] + 0.5 * (y[i] + y[i-1]) * dx
+    # Calculate step sizes
+    dx = np.diff(x)
+    
+    # Calculate average values between consecutive points
+    y_avg = 0.5 * (y[1:] + y[:-1])
+    
+    # Cumulative sum with initial value of 0
+    integrated = np.concatenate([[0], np.cumsum(y_avg * dx)])
+    
     return integrated
 
 

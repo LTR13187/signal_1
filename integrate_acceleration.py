@@ -111,7 +111,7 @@ def integrate_acceleration(data):
     return velocity_calc, position_calc
 
 
-def plot_results(data, velocity_calc, position_calc, output_file='integration_results.png'):
+def plot_results(data, velocity_calc, position_calc, output_file='integration_results.png', show_plot=False):
     """
     Plot the calculated and reference values for comparison.
     
@@ -120,6 +120,7 @@ def plot_results(data, velocity_calc, position_calc, output_file='integration_re
         velocity_calc: Calculated velocity values
         position_calc: Calculated position values
         output_file: Path to save the output plot (default: 'integration_results.png')
+        show_plot: Whether to display the plot interactively (default: False)
     """
     fig, axes = plt.subplots(3, 1, figsize=(12, 10))
     
@@ -154,7 +155,28 @@ def plot_results(data, velocity_calc, position_calc, output_file='integration_re
     plt.tight_layout()
     plt.savefig(output_file, dpi=150)
     print(f"Plot saved as '{output_file}'")
-    plt.show()
+    
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
+
+
+def calculate_error_stats(reference, calculated, name):
+    """
+    Calculate and format error statistics.
+    
+    Args:
+        reference: Reference values
+        calculated: Calculated values
+        name: Name of the quantity for display
+    """
+    error = calculated - reference
+    
+    print(f"\n{name}:")
+    print(f"  Mittlerer Fehler (Mean Error):          {np.mean(error):.6e}")
+    print(f"  RMS Fehler (RMS Error):                 {np.sqrt(np.mean(error**2)):.6e}")
+    print(f"  Maximaler absoluter Fehler (Max Error): {np.max(np.abs(error)):.6e}")
 
 
 def calculate_errors(data, velocity_calc, position_calc):
@@ -166,21 +188,13 @@ def calculate_errors(data, velocity_calc, position_calc):
         velocity_calc: Calculated velocity values
         position_calc: Calculated position values
     """
-    velocity_error = velocity_calc - data['velocity_ref'].values
-    position_error = position_calc - data['position_ref'].values
-    
     print("\n" + "="*60)
     print("Fehlerstatistik (Error Statistics)")
     print("="*60)
-    print("\nGeschwindigkeit (Velocity):")
-    print(f"  Mittlerer Fehler (Mean Error):          {np.mean(velocity_error):.6e}")
-    print(f"  RMS Fehler (RMS Error):                 {np.sqrt(np.mean(velocity_error**2)):.6e}")
-    print(f"  Maximaler absoluter Fehler (Max Error): {np.max(np.abs(velocity_error)):.6e}")
     
-    print("\nWeg (Position):")
-    print(f"  Mittlerer Fehler (Mean Error):          {np.mean(position_error):.6e}")
-    print(f"  RMS Fehler (RMS Error):                 {np.sqrt(np.mean(position_error**2)):.6e}")
-    print(f"  Maximaler absoluter Fehler (Max Error): {np.max(np.abs(position_error)):.6e}")
+    calculate_error_stats(data['velocity_ref'].values, velocity_calc, "Geschwindigkeit (Velocity)")
+    calculate_error_stats(data['position_ref'].values, position_calc, "Weg (Position)")
+    
     print("="*60)
 
 
@@ -201,6 +215,11 @@ def main():
         '--output', '-o',
         default='integration_results.png',
         help='Pfad zur Ausgabedatei für Plots (default: integration_results.png)'
+    )
+    parser.add_argument(
+        '--show-plot',
+        action='store_true',
+        help='Plot interaktiv anzeigen (blockiert die Ausführung)'
     )
     args = parser.parse_args()
     
@@ -226,7 +245,7 @@ def main():
     
     # Plot results
     print("\nErstelle Plots...")
-    plot_results(data, velocity_calc, position_calc, output_file=args.output)
+    plot_results(data, velocity_calc, position_calc, output_file=args.output, show_plot=args.show_plot)
     
     print("\nFertig!")
 

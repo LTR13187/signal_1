@@ -67,7 +67,6 @@ def get_data_start_info(file_path):
         raise ValueError("File is empty.")
     
     # Count total lines in the file for validation
-    total_lines = len(lines)
     with open(file_path, 'r', encoding='utf-8') as f:
         total_lines = sum(1 for _ in f)
     
@@ -87,6 +86,7 @@ def get_data_start_info(file_path):
         raise ValueError(f"ERROR: Row number {skiprows} is out of range. The file has only {total_lines} lines.")
     
     # Detect separator from the specified starting line
+    data_line = None
     if skiprows < len(lines):
         data_line = lines[skiprows].strip()
     else:
@@ -96,6 +96,10 @@ def get_data_start_info(file_path):
                 if i == skiprows:
                     data_line = line.strip()
                     break
+    
+    # Ensure data_line was found
+    if data_line is None:
+        raise ValueError(f"ERROR: Could not read line {skiprows} from the file.")
     
     if '\t' in data_line:
         sep = '\t'

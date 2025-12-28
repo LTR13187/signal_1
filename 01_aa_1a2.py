@@ -35,9 +35,9 @@ def get_data_start_info(file_path):
             if i >= 100:  # Limit to first 100 lines for header detection
                 break
     
-    # Search for DATA_START marker
+    # Search for DATA_START marker (case-insensitive)
     for idx, line in enumerate(lines):
-        if 'DATA_START' in line:
+        if line.strip().lower() == "data_start":
             data_start_idx = idx
             break
     
@@ -60,49 +60,58 @@ def get_data_start_info(file_path):
         return skiprows, col_names, sep
     
     # Fallback: No DATA_START marker found
-    # Try to automatically detect the file format
-    print("INFO: DATA_START marker not found. Attempting automatic detection...")
+    print("ERROR: The line 'data_start' is missing in the specified file. Ensure that the 'data_start' indicator exists to mark the beginning of the dataset, or adjust the script to handle your file's structure.")
     
     # Analyze first few lines to detect format
     if len(lines) == 0:
         raise ValueError("File is empty.")
     
-    # Detect separator from first line
-    first_line = lines[0].strip()
-    if '\t' in first_line:
+    # Count total lines in the file for validation
+    total_lines = len(lines)
+    with open(file_path, 'r', encoding='utf-8') as f:
+        total_lines = sum(1 for _ in f)
+    
+    # Offer user the option to manually specify the starting row
+    user_input = input("The 'data_start' line was not found. Enter the row number where data starts (starting from 0): ")
+    
+    # Validate the user input
+    try:
+        skiprows = int(user_input.strip())
+    except ValueError:
+        raise ValueError("ERROR: Invalid input. Please enter a valid integer for the row number.")
+    
+    # Validate that the row number is within range
+    if skiprows < 0:
+        raise ValueError("ERROR: Row number cannot be negative.")
+    if skiprows >= total_lines:
+        raise ValueError(f"ERROR: Row number {skiprows} is out of range. The file has only {total_lines} lines.")
+    
+    # Detect separator from the specified starting line
+    if skiprows < len(lines):
+        data_line = lines[skiprows].strip()
+    else:
+        # Read the specific line if not in our cached lines
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for i, line in enumerate(f):
+                if i == skiprows:
+                    data_line = line.strip()
+                    break
+    
+    if '\t' in data_line:
         sep = '\t'
-    elif ',' in first_line:
+    elif ',' in data_line:
         sep = ','
     else:
         sep = '\t'  # default to tab
     
-    # Check if first line looks like data (all numeric) or header (contains text)
-    first_parts = first_line.split(sep)
+    # Generate generic column names based on the data line
+    data_parts = data_line.split(sep)
+    num_cols = len(data_parts)
+    col_names = [f'Column_{i+1}' for i in range(num_cols)]
     
-    # Try to determine if first line is a header or data
-    is_header = False
-    try:
-        # If we can't convert all parts to float, it's likely a header
-        for part in first_parts:
-            part = part.strip()
-            if part:  # Only try to convert non-empty strings
-                float(part)
-    except ValueError:
-        is_header = True
-    
-    if is_header:
-        # First line is a header
-        col_names = [col.strip() for col in first_parts]
-        skiprows = 1
-    else:
-        # First line is data, generate generic column names
-        num_cols = len(first_parts)
-        col_names = [f'Column_{i+1}' for i in range(num_cols)]
-        skiprows = 0
-    
+    print(f"INFO: Using row {skiprows} as data start")
     print(f"INFO: Detected separator: {'TAB' if sep == '\t' else repr(sep)}")
-    print(f"INFO: Detected {len(col_names)} columns: {col_names}")
-    print(f"INFO: Data starts at line {skiprows + 1}")
+    print(f"INFO: Detected {len(col_names)} columns")
     
     return skiprows, col_names, sep
 

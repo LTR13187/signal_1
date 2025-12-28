@@ -27,8 +27,13 @@ def get_data_start_info(file_path):
     data_start_idx = None
     
     # Read file and look for DATA_START marker
+    # Only read first 100 lines to avoid memory issues with large files
+    lines = []
     with open(file_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+        for i, line in enumerate(f):
+            lines.append(line)
+            if i >= 100:  # Limit to first 100 lines for header detection
+                break
     
     # Search for DATA_START marker
     for idx, line in enumerate(lines):
@@ -79,7 +84,9 @@ def get_data_start_info(file_path):
     try:
         # If we can't convert all parts to float, it's likely a header
         for part in first_parts:
-            float(part)
+            part = part.strip()
+            if part:  # Only try to convert non-empty strings
+                float(part)
     except ValueError:
         is_header = True
     
@@ -93,7 +100,7 @@ def get_data_start_info(file_path):
         col_names = [f'Column_{i+1}' for i in range(num_cols)]
         skiprows = 0
     
-    print(f"INFO: Detected separator: {'TAB' if sep == chr(9) else repr(sep)}")
+    print(f"INFO: Detected separator: {'TAB' if sep == '\t' else repr(sep)}")
     print(f"INFO: Detected {len(col_names)} columns: {col_names}")
     print(f"INFO: Data starts at line {skiprows + 1}")
     
@@ -114,7 +121,7 @@ if __name__ == "__main__":
     
     print(f"Automatisch gefundene Datenzeile: {skiprows+1}")
     print(f"Spalten: {col_names}")
-    print(f"Trennzeichen: {'TAB' if sep == chr(9) else repr(sep)}")
+    print(f"Trennzeichen: {'TAB' if sep == '\t' else repr(sep)}")
     
     # Read and display first few rows of data
     try:
